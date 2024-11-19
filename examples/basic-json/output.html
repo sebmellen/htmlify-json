@@ -1,0 +1,147 @@
+<style>
+  .json-container {
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+    padding: 5px;
+  }
+  .json-key {
+    font-weight: bold;
+    color: #000;
+  }
+  .json-value {
+    margin-left: 8px;
+    color: #3b3b3b;
+  }
+  .json-number {
+    margin-left: 8px;
+    color: #0f766e;
+  }
+  .json-boolean {
+    margin-left: 8px;
+    color: #9333ea;
+  }
+  .json-null {
+    margin-left: 8px;
+    color: #888;
+    font-style: italic;
+  }
+  .json-heading {
+    margin: 16px 0 8px 0;
+  }
+  .json-list {
+    margin: 0;
+    padding: 0 0 0 20px;
+    line-height: 1.5;
+  }
+  .json-top-list {
+    margin: 0;
+    padding: 0 0 0 20px;
+    list-style: "↘";
+  }
+  .json-top-list > li {
+    color: inherit;
+  }
+  .json-top-list > li::marker {
+    color: #9ca3af;
+  }
+  .json-top-list-item {
+    display: inline-flex;
+    align-items: center;
+  }
+  .json-top-list-marker {
+    margin-right: 8px;
+    color: #000;
+  }
+  .json-circular {
+    margin-left: 8px;
+    color: #ff0000;
+  }
+</style>
+<div class="json-container">
+  <ul class="json-top-list">
+    <li>
+      <span class="json-key">User:</span>
+      <ul class="json-list">
+        <li>
+          <span class="json-key">Id:</span
+          ><span class="json-number">12345</span>
+        </li>
+        <li>
+          <span class="json-key">Name:</span
+          ><span class="json-value">John Doe</span>
+        </li>
+        <li>
+          <span class="json-key">Email:</span
+          ><span class="json-value">john.doe@example.com</span>
+        </li>
+        <li>
+          <span class="json-key">Is Active:</span
+          ><span class="json-boolean">true</span>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <span class="json-key">Profile:</span>
+      <ul class="json-list">
+        <li>
+          <span class="json-key">Age:</span><span class="json-number">30</span>
+        </li>
+        <li>
+          <span class="json-key">Gender:</span
+          ><span class="json-value">male</span>
+        </li>
+        <li>
+          <span class="json-key">Location:</span>
+          <ul class="json-list">
+            <li>
+              <span class="json-key">City:</span
+              ><span class="json-value">New York</span>
+            </li>
+            <li>
+              <span class="json-key">State:</span
+              ><span class="json-value">NY</span>
+            </li>
+            <li>
+              <span class="json-key">Country:</span
+              ><span class="json-value">USA</span>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <span class="json-key">Preferences:</span>
+      <ul class="json-list">
+        <li>
+          <span class="json-key">Notifications:</span>
+          <ul class="json-list">
+            <li>
+              <span class="json-key">Email:</span
+              ><span class="json-boolean">true</span>
+            </li>
+            <li>
+              <span class="json-key">Sms:</span
+              ><span class="json-boolean">false</span>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <span class="json-key">Theme:</span
+          ><span class="json-value">dark</span>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <span class="json-key">Hobbies:</span>
+      <ul class="json-list">
+        <li><span class="json-value">reading</span></li>
+        <li><span class="json-value">hiking</span></li>
+        <li><span class="json-value">coding</span></li>
+      </ul>
+    </li>
+    <li>
+      <span class="json-key">Created At:</span
+      ><span class="json-value">2024-11-19T12:34:56Z</span>
+    </li>
+  </ul>
+</div>

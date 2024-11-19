@@ -30,8 +30,8 @@ const jsonToHtml = (json, options = {}) => {
     boolean: "margin-left: 8px; color: #9333EA;",
     null: "margin-left: 8px; color: #888; font-style: italic;",
     heading: "margin: 16px 0 8px 0;",
-    list: "margin: 0; padding: 0; line-height: 1.5; list-style: none;", // Fully reset list styles
-    "top-list": "margin: 0; padding: 0; list-style: none;", // Avoid newline for top list markers
+    list: "margin: 0; padding: 0 0 0 20px; line-height: 1.5;", // Fully reset list styles
+    "top-list": "margin: 0; padding: 0 0 0 20px; list-style: '↘';", // Avoid newline for top list markers
     "top-list-item": "display: inline-flex; align-items: center;", // Prevent newline and align
     "top-list-marker": "margin-right: 8px; color: #000;", // Style marker manually
     circular: "margin-left: 8px; color: #FF0000;",

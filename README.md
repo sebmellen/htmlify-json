@@ -19,6 +19,10 @@ The simplest, most elegant way to transform JSON into beautiful HTML.
 npm install htmlify-json
 ```
 
+## 👀 Examples
+
+See the [examples](./examples) folder in the repository for more detailed examples and use cases.
+
 ## 📖 Usage
 
 ```javascript

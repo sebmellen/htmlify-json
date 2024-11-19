@@ -1,8 +1,8 @@
 {
 	"name": "htmlify-json",
-	"version": "1.0.0",
+	"version": "1.0.3",
 	"description": "A simple utility to convert JSON to nicely formatted HTML",
-	"main": "jsontohtml.js",
+	"main": "main.js",
 	"type": "module",
 	"scripts": {
 		"test": "node test.js"

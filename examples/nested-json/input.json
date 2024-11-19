@@ -1,0 +1,139 @@
+{
+	"interplanetaryExploration": {
+		"missions": [
+			{
+				"missionId": "m001",
+				"name": "Voyager Program",
+				"startDate": "1977-09-05",
+				"status": "Operational",
+				"spacecraft": [
+					{
+						"name": "Voyager 1",
+						"type": "Space Probe",
+						"launchSite": "Cape Canaveral",
+						"instruments": [
+							"Imaging Science Subsystem",
+							"Ultraviolet Spectrometer",
+							"Cosmic Ray System"
+						],
+						"destination": [
+							{
+								"planet": "Jupiter",
+								"flybyDate": "1979-03-05"
+							},
+							{
+								"planet": "Saturn",
+								"flybyDate": "1980-11-12"
+							}
+						],
+						"currentStatus": {
+							"distanceFromEarth": "24 billion km",
+							"powerSource": "RTG (Radioisotope Thermoelectric Generator)"
+						}
+					},
+					{
+						"name": "Voyager 2",
+						"type": "Space Probe",
+						"launchSite": "Cape Canaveral",
+						"instruments": [
+							"Magnetometer",
+							"Plasma Science Instrument",
+							"Photopolarimeter Subsystem"
+						],
+						"destination": [
+							{
+								"planet": "Jupiter",
+								"flybyDate": "1979-07-09"
+							},
+							{
+								"planet": "Saturn",
+								"flybyDate": "1981-08-26"
+							},
+							{
+								"planet": "Uranus",
+								"flybyDate": "1986-01-24"
+							},
+							{
+								"planet": "Neptune",
+								"flybyDate": "1989-08-25"
+							}
+						],
+						"currentStatus": {
+							"distanceFromEarth": "19 billion km",
+							"powerSource": "RTG (Radioisotope Thermoelectric Generator)"
+						}
+					}
+				]
+			},
+			{
+				"missionId": "m002",
+				"name": "Mars Exploration Program",
+				"startDate": "2003-06-10",
+				"status": "Ongoing",
+				"rovers": [
+					{
+						"name": "Spirit",
+						"landingSite": "Gusev Crater",
+						"launchDate": "2003-06-10",
+						"missionDuration": "6 years",
+						"discoveries": [
+							"Evidence of ancient hot springs",
+							"Chemical traces of water"
+						]
+					},
+					{
+						"name": "Curiosity",
+						"landingSite": "Gale Crater",
+						"launchDate": "2011-11-26",
+						"missionDuration": "Ongoing",
+						"discoveries": [
+							"Methane spikes in atmosphere",
+							"Complex organic molecules in rock samples"
+						]
+					}
+				]
+			}
+		],
+		"planetsExplored": [
+			{
+				"name": "Mars",
+				"radius": "3,389.5 km",
+				"moons": ["Phobos", "Deimos"],
+				"missions": ["Mars Exploration Program", "Mars Reconnaissance Orbiter"]
+			},
+			{
+				"name": "Jupiter",
+				"radius": "69,911 km",
+				"moons": ["Europa", "Ganymede", "Io", "Callisto"],
+				"missions": ["Voyager Program", "Galileo", "Juno"]
+			}
+		],
+		"scientificGoals": {
+			"astrobiology": {
+				"focus": "Search for signs of life",
+				"keyRegions": ["Subsurface oceans on Europa", "Methane pockets on Mars"]
+			},
+			"planetaryGeology": {
+				"focus": "Understand surface processes",
+				"keyRegions": ["Valles Marineris", "Olympus Mons"]
+			}
+		},
+		"futureProjects": [
+			{
+				"name": "Europa Clipper",
+				"plannedLaunch": "2024",
+				"goal": "Investigate the habitability of Europa",
+				"technology": {
+					"propulsion": "Solar Electric Propulsion",
+					"instruments": ["Ice-Penetrating Radar", "Mass Spectrometer"]
+				}
+			},
+			{
+				"name": "Mars Sample Return",
+				"plannedLaunch": "2026",
+				"goal": "Retrieve samples from Mars surface",
+				"collaboration": ["NASA", "ESA"]
+			}
+		]
+	}
+}
