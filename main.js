@@ -79,24 +79,16 @@ const jsonToHtml = (json, options = {}) => {
   };
 
   const shouldBeHeader = (path) => {
-    // Helper to get header level, checking all path variants
-    const checkPath = (p) => {
-      if (headers[p]) return headers[p];
+    // Check exact path match first
+    if (headers[path]) return headers[path];
 
-      // Check array pattern
-      const arrayPattern = p.replace(/\[\d+\]/g, "[]");
-      if (headers[arrayPattern]) return headers[arrayPattern];
+    // Check for array pattern matches
+    const arrayPatternPath = path.replace(/\[\d+\]/g, "[]");
+    if (headers[arrayPatternPath]) return headers[arrayPatternPath];
 
-      // Check normalized (no arrays)
-      const normalized = p.replace(/\[\d+\]/g, "").replace(/\.\./g, ".");
-      if (headers[normalized]) return headers[normalized];
-
-      // NEW: Check just the last part after the last header
-      const lastPart = p.split(".").pop();
-      return headers[lastPart];
-    };
-
-    return checkPath(path);
+    // For deeply nested properties, try without array notation
+    const normalizedPath = path.replace(/\[\d+\]/g, "").replace(/\.\./g, ".");
+    return headers[normalizedPath];
   };
 
   const convertValue = (value, path = "", level = 0) => {
@@ -185,8 +177,11 @@ const jsonToHtml = (json, options = {}) => {
               const headerLevel = shouldBeHeader(`${path}.${key}`);
               return `${indent}<h${headerLevel}${applyStyle(
                 "heading"
-              )}>${escapeHtml(formatKey(key))}</h${headerLevel}>
-${convertValue(value, `${segment.itemPath}.${key}`, level + 1)}`;
+              )}>${escapeHtml(formatKey(key))}: ${convertValue(
+                value,
+                `${segment.itemPath}.${key}`,
+                level + 1
+              )}</h${headerLevel}>`;
             })
             .join("\n")}
 ${segment.remainingEntries
