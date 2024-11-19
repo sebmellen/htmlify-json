@@ -301,45 +301,37 @@ ${indent}</ul>`;
 
     const indent = getIndent(level);
 
-    // Regular object rendering
-    return keys
-      .map((key) => {
-        const value = obj[key];
-        const newPath = path ? `${path}.${key}` : key;
-        const headerLevel = shouldBeHeader(newPath);
+    // Add this block to handle list rendering
+    if (shouldRenderAsList(path)) {
+      const items = keys
+        .map((key) => {
+          const value = obj[key];
+          const newPath = path ? `${path}.${key}` : key;
+          const headerLevel = shouldBeHeader(newPath);
 
-        console.log(`Checking path: ${newPath}, headerLevel: ${headerLevel}`); // Debug log
+          if (headerLevel) {
+            // If it's a header, break it out of the list structure
+            return `</ul>
+<h${headerLevel}${applyStyle("heading")}>${escapeHtml(
+              formatKey(key)
+            )}</h${headerLevel}>
+${convertValue(value, newPath, 1)}
+<ul${applyStyle("list")}>`;
+          }
 
-        if (headerLevel) {
-          // For headers, show a preview of complex values within the header
-          const valueHtml = convertValue(value, newPath, level + 1);
-          return `<h${headerLevel}${applyStyle("heading")}>${escapeHtml(
+          // Regular list item
+          return `${indent}  <li><span${applyStyle("key")}>${escapeHtml(
             formatKey(key)
-          )}: ${
-            typeof value === "object" && value !== null
-              ? `<span${applyStyle("value")}>${
-                  Array.isArray(value) ? `[${value.length} items]` : "{...}"
-                }</span>`
-              : valueHtml
-          }</h${headerLevel}>${
-            typeof value === "object" && value !== null ? `\n${valueHtml}` : ""
-          }`;
-        }
+          )}:</span> ${convertValue(value, newPath, level + 1)}</li>`;
+        })
+        .join("\n");
 
-        // Non-header items
-        if (value === null || typeof value !== "object") {
-          return `${indent}<div>
-  <span${applyStyle("key")}>${escapeHtml(formatKey(key))}:</span>
-  ${convertValue(value, newPath, level + 1)}
-</div>`;
-        }
+      // Use top-list style for top-level lists when listObjects is true
+      const listStyle = level === 0 ? "top-list" : "list";
+      return `${indent}<ul${applyStyle(listStyle)}>${items}${indent}</ul>`;
+    }
 
-        return `${indent}<div>
-  <div${applyStyle("key")}>${escapeHtml(formatKey(key))}</div>
-  ${convertValue(value, newPath, level + 1)}
-</div>`;
-      })
-      .join("\n\n");
+    // Rest of the existing convertObject function...
   };
 
   // Add post-processing function
