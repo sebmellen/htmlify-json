@@ -6,8 +6,9 @@
  * @param {number} [options.indent=2] - Number of spaces for indentation
  * @param {string} [options.initialPath=""] - Initial path for the root object
  * @param {"default"|"none"|object} [options.useStyles="default"] - Styling configuration
- * @param {string[]} [options.listObjects=["additionalStatusDetails"]] - Keys that should be rendered as lists
+ * @param {boolean|string[]} [options.listObjects=false] - Keys that should be rendered as lists
  * @param {boolean} [options.formatKeys=false] - Whether to format keys from camelCase/snake_case to normal text
+ * @param {"inline"|"top"} [options.styleLocation="inline"] - Where to place styles: inline or in a top-level style tag
  * @returns {string} The generated HTML string
  */
 const jsonToHtml = (json, options = {}) => {
@@ -16,8 +17,9 @@ const jsonToHtml = (json, options = {}) => {
     indent = 2,
     initialPath = "",
     useStyles = "default",
-    listObjects = ["additionalStatusDetails"],
+    listObjects = false,
     formatKeys = false,
+    styleLocation = "inline",
   } = options;
 
   const defaultStyles = {
@@ -30,6 +32,8 @@ const jsonToHtml = (json, options = {}) => {
     null: "margin-left: 8px; color: #888; font-style: italic;",
     heading: "margin: 16px 0 8px 0;",
     list: "margin: 0; padding-left: 20px;",
+    "top-list":
+      "margin: 0; padding-left: 20px; list-style-type: '→'; list-style-position: outside; padding-left: 28px;",
     circular: "margin-left: 8px; color: #DC2626;",
   };
 
@@ -40,7 +44,32 @@ const jsonToHtml = (json, options = {}) => {
       ? defaultStyles
       : { ...defaultStyles, ...useStyles };
 
-  const applyStyle = (key) => (styles[key] ? ` style="${styles[key]}"` : "");
+  const applyStyle = (key) => {
+    if (!styles[key]) return "";
+    if (styleLocation === "inline") {
+      if (key === "top-list") {
+        return ` style="${styles[key].replace("'→'", "'\\2192'")}"`;
+      }
+      return ` style="${styles[key]}"`;
+    }
+    return ` class="json-${key}"`;
+  };
+
+  const generateStyleTag = () => {
+    if (styleLocation !== "top" || useStyles === "none") return "";
+
+    const styleRules = Object.entries(styles)
+      .map(([key, value]) => {
+        if (key === "top-list") {
+          return `.json-${key} { ${value} }
+.json-${key} > li { padding-left: 8px; }`;
+        }
+        return `.json-${key} { ${value} }`;
+      })
+      .join("\n");
+
+    return `<style>\n${styleRules}\n</style>\n\n`;
+  };
 
   const visited = new WeakSet();
 
@@ -74,8 +103,11 @@ const jsonToHtml = (json, options = {}) => {
   };
 
   const shouldRenderAsList = (path) => {
-    const lastKey = path.split(".").pop();
-    return listObjects.includes(lastKey);
+    if (Array.isArray(listObjects)) {
+      const lastKey = path.split(".").pop();
+      return listObjects.includes(lastKey);
+    }
+    return listObjects;
   };
 
   const shouldBeHeader = (path) => {
@@ -268,6 +300,7 @@ ${convertValue(value, "", 1)}
         })
         .join("\n");
 
+      // Always use regular list style, we'll transform the outer list in post-processing
       return `${indent}<ul${applyStyle("list")}>${items}${indent}</ul>`;
     }
 
@@ -308,9 +341,29 @@ ${convertValue(value, "", 1)}`;
       .join("\n\n");
   };
 
-  return `<div${applyStyle("container")}>
+  // Add post-processing function
+  const postProcessHtml = (html) => {
+    // Only apply top-list styling when we have a key followed by a list containing another list
+    let processed = html.replace(
+      /(<li><span[^>]*json-key[^>]*>[^<]*<\/span>\s*<ul[^>]*json-list[^>]*>(?=\s*<li>\s*<ul))/g,
+      (match) => {
+        return match.replace("json-list", "json-top-list");
+      }
+    );
+
+    // Remove empty ul tags
+    let previousHtml;
+    do {
+      previousHtml = processed;
+      processed = processed.replace(/<ul[^>]*>\s*<\/ul>/g, "");
+    } while (processed !== previousHtml);
+
+    return processed;
+  };
+
+  return postProcessHtml(`${generateStyleTag()}<div${applyStyle("container")}>
 ${convertValue(json, initialPath)}
-</div>`;
+</div>`);
 };
 
 export { jsonToHtml };
