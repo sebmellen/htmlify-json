@@ -1,4 +1,4 @@
-# 🎨 json-html
+# 🎨 htmlify-json
 
 The simplest, most elegant way to transform JSON into beautiful HTML.
 
@@ -16,13 +16,14 @@ The simplest, most elegant way to transform JSON into beautiful HTML.
 ## 🚀 Installation
 
 ```bash
-npm install json-html
+npm install htmlify-json
 ```
 
 ## 📖 Usage
 
 ```javascript
-import { jsonToHtml } from "json-html";
+import { jsonToHtml } from "htmlify-json";
+
 const json = {
   name: "John Doe",
   age: 30,

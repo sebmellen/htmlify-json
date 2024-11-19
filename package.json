@@ -1,5 +1,5 @@
 {
-	"name": "json-html",
+	"name": "htmlify-json",
 	"version": "1.0.0",
 	"description": "A simple utility to convert JSON to nicely formatted HTML",
 	"main": "jsontohtml.js",
@@ -9,13 +9,13 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/sebmellen/json-html.git"
+		"url": "git+https://github.com/sebmellen/htmlify-json.git"
 	},
 	"keywords": ["json", "html", "json-to-html"],
 	"author": "Sebastian Mellen",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/sebmellen/json-html/issues"
+		"url": "https://github.com/sebmellen/htmlify-json/issues"
 	},
-	"homepage": "https://github.com/sebmellen/json-html#readme"
+	"homepage": "https://github.com/sebmellen/htmlify-json#readme"
 }
