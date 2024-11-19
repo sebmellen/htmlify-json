@@ -152,6 +152,18 @@ const jsonToHtml = (json, options = {}) => {
 
     const indent = getIndent(level);
 
+    // Check if this array contains nested objects that should become lists
+    const hasNestedLists = arr.some((item) => {
+      if (typeof item !== "object" || item === null) return false;
+      // If listObjects is true, any object should become a list
+      if (listObjects === true) return true;
+      // For array of listObjects keys, check if any nested keys match
+      if (Array.isArray(listObjects)) {
+        return Object.keys(item).some((key) => listObjects.includes(key));
+      }
+      return false;
+    });
+
     // First, analyze the array to see if we need to split it due to headers
     const segments = arr.reduce((acc, item, index) => {
       if (typeof item === "object" && item !== null) {
@@ -199,11 +211,6 @@ const jsonToHtml = (json, options = {}) => {
       }
       return acc;
     }, []);
-
-    // Check if this array contains nested objects that will become lists
-    const hasNestedLists = arr.some(
-      (item) => typeof item === "object" && item !== null
-    );
 
     // Render all segments
     return segments
