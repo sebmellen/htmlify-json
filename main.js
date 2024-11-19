@@ -78,6 +78,27 @@ const jsonToHtml = (json, options = {}) => {
     return listObjects.includes(lastKey);
   };
 
+  const shouldBeHeader = (path) => {
+    // Helper to get header level, checking all path variants
+    const checkPath = (p) => {
+      if (headers[p]) return headers[p];
+
+      // Check array pattern
+      const arrayPattern = p.replace(/\[\d+\]/g, "[]");
+      if (headers[arrayPattern]) return headers[arrayPattern];
+
+      // Check normalized (no arrays)
+      const normalized = p.replace(/\[\d+\]/g, "").replace(/\.\./g, ".");
+      if (headers[normalized]) return headers[normalized];
+
+      // NEW: Check just the last part after the last header
+      const lastPart = p.split(".").pop();
+      return headers[lastPart];
+    };
+
+    return checkPath(path);
+  };
+
   const convertValue = (value, path = "", level = 0) => {
     if (value === null) {
       return formatPrimitive(null);
@@ -105,23 +126,99 @@ const jsonToHtml = (json, options = {}) => {
     if (arr.length === 0) return "<div>(empty array)</div>";
 
     const indent = getIndent(level);
-    const itemIndent = getIndent(level + 1);
 
-    const items = arr
-      .map(
-        (item, index) =>
-          `${itemIndent}<li>${convertValue(
-            item,
-            `${path}[${index}]`,
-            level + 1
-          )}</li>`
-      )
-      .join("\n");
+    // First, analyze the array to see if we need to split it due to headers
+    const segments = arr.reduce((acc, item, index) => {
+      if (typeof item === "object" && item !== null) {
+        // Find any header properties in this item
+        const headerEntries = Object.entries(item).filter(([key]) => {
+          const fullPath = `${path}.${key}`; // Try direct path
+          const normalizedPath = fullPath
+            .replace(/\[\d+\]/g, "")
+            .replace(/\.\./g, "."); // Try normalized
+          return shouldBeHeader(fullPath) || shouldBeHeader(normalizedPath);
+        });
 
-    return `
-${indent}<ul${applyStyle("list")}>
-${items}
+        if (headerEntries.length > 0) {
+          // Create a header segment
+          acc.push({
+            type: "header",
+            content: headerEntries,
+            remainingEntries: Object.entries(item).filter(
+              ([key]) =>
+                !shouldBeHeader(`${path}.${key}`) &&
+                !shouldBeHeader(
+                  `${path}.${key}`.replace(/\[\d+\]/g, "").replace(/\.\./g, ".")
+                )
+            ),
+            itemPath: `${path}[${index}]`,
+          });
+          // Start a new list segment
+          acc.push({
+            type: "list",
+            items: [],
+          });
+        } else {
+          // Add to current list segment
+          if (acc.length === 0 || acc[acc.length - 1].type === "header") {
+            acc.push({ type: "list", items: [] });
+          }
+          acc[acc.length - 1].items.push({ item, index });
+        }
+      } else {
+        // Handle primitive values
+        if (acc.length === 0 || acc[acc.length - 1].type === "header") {
+          acc.push({ type: "list", items: [] });
+        }
+        acc[acc.length - 1].items.push({ item, index });
+      }
+      return acc;
+    }, []);
+
+    // Render all segments
+    return segments
+      .map((segment) => {
+        if (segment.type === "header") {
+          // Render headers and their remaining properties
+          return `${segment.content
+            .map(([key, value]) => {
+              const headerLevel = shouldBeHeader(`${path}.${key}`);
+              return `${indent}<h${headerLevel}${applyStyle(
+                "heading"
+              )}>${escapeHtml(formatKey(key))}</h${headerLevel}>
+${convertValue(value, `${segment.itemPath}.${key}`, level + 1)}`;
+            })
+            .join("\n")}
+${segment.remainingEntries
+  .map(
+    ([key, value]) =>
+      `${indent}<div><span${applyStyle("key")}>${escapeHtml(
+        formatKey(key)
+      )}:</span> ${convertValue(
+        value,
+        `${segment.itemPath}.${key}`,
+        level + 1
+      )}</div>`
+  )
+  .join("\n")}`;
+        } else {
+          // Render list segments
+          if (segment.items.length === 0) return "";
+          return `${indent}<ul${applyStyle("list")}>
+${segment.items
+  .map(
+    ({ item, index }) =>
+      `${getIndent(level + 1)}<li>${convertValue(
+        item,
+        `${path}[${index}]`,
+        level + 1
+      )}</li>`
+  )
+  .join("\n")}
 ${indent}</ul>`;
+        }
+      })
+      .join("\n");
   };
 
   const toNormalText = (str) => {
@@ -157,18 +254,19 @@ ${indent}</ul>`;
         .map((key) => {
           const value = obj[key];
           const newPath = path ? `${path}.${key}` : key;
+          const headerLevel = headers[newPath];
 
-          // Special handling for nested objects that should be lists
-          if (
-            typeof value === "object" &&
-            value !== null &&
-            shouldRenderAsList(newPath)
-          ) {
-            return `${indent}  <li><span${applyStyle("key")}>${escapeHtml(
+          if (headerLevel) {
+            // If it's a header, break it out of the list structure
+            return `</ul>
+<h${headerLevel}${applyStyle("heading")}>${escapeHtml(
               formatKey(key)
-            )}:</span> ${convertValue(value, newPath, level + 1)}</li>`;
+            )}</h${headerLevel}>
+${convertValue(value, "", 1)}
+<ul${applyStyle("list")}>`;
           }
 
+          // Regular list item
           return `${indent}  <li><span${applyStyle("key")}>${escapeHtml(
             formatKey(key)
           )}:</span> ${convertValue(value, newPath, level + 1)}</li>`;
@@ -187,17 +285,16 @@ ${indent}</ul>`;
 
         if (headerLevel) {
           if (value === null || typeof value !== "object") {
-            // Single key-value pair with header - wrap both in header
-            return `${indent}<h${headerLevel}${applyStyle("heading")}>
+            return `<h${headerLevel}${applyStyle("heading")}>
   <span${applyStyle("key")}>${escapeHtml(formatKey(key))}:</span>
-  ${convertValue(value, newPath, level + 1)}
+  ${convertValue(value, "", 1)}
 </h${headerLevel}>`;
           }
-          // Object value with header
-          return `${indent}<h${headerLevel}${applyStyle(
-            "heading"
-          )}>${escapeHtml(formatKey(key))}</h${headerLevel}>
-${indent}${convertValue(value, newPath, level + 1)}`;
+
+          return `<h${headerLevel}${applyStyle("heading")}>${escapeHtml(
+            formatKey(key)
+          )}</h${headerLevel}>
+${convertValue(value, "", 1)}`;
         }
 
         // Non-header items
