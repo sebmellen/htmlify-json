@@ -1,0 +1,21 @@
+{
+	"name": "json-html",
+	"version": "1.0.0",
+	"description": "A simple utility to convert JSON to nicely formatted HTML",
+	"main": "jsontohtml.js",
+	"type": "module",
+	"scripts": {
+		"test": "node test.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/sebmellen/json-html.git"
+	},
+	"keywords": ["json", "html", "json-to-html"],
+	"author": "Sebastian Mellen",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/sebmellen/json-html/issues"
+	},
+	"homepage": "https://github.com/sebmellen/json-html#readme"
+}
