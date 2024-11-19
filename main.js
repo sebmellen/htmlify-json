@@ -3,25 +3,22 @@
  * @param {object|array|string|number|boolean|null} json - The JSON data to convert
  * @param {object} options - Configuration options
  * @param {Object<string, number>} [options.headers={}] - Mapping of JSON paths to heading levels (h1-h6)
- * @param {number} [options.indent=2] - Number of spaces for indentation
  * @param {string} [options.initialPath=""] - Initial path for the root object
  * @param {"default"|"none"|object} [options.useStyles="default"] - Styling configuration
  * @param {boolean|string[]} [options.listObjects=false] - Keys that should be rendered as lists
  * @param {boolean} [options.formatKeys=false] - Whether to format keys from camelCase/snake_case to normal text
  * @param {"inline"|"top"} [options.styleLocation="inline"] - Where to place styles: inline or in a top-level style tag
- * @param {"pretty"|"minified"|"none"} [options.outputFormat="none"] - Format of the final HTML output
  * @returns {string} The generated HTML string
  */
+
 const jsonToHtml = (json, options = {}) => {
   const {
     headers = {},
-    indent = 2,
     initialPath = "",
     useStyles = "default",
     listObjects = false,
     formatKeys = false,
     styleLocation = "inline",
-    outputFormat = "minified",
   } = options;
 
   const defaultStyles = {
@@ -33,10 +30,11 @@ const jsonToHtml = (json, options = {}) => {
     boolean: "margin-left: 8px; color: #9333EA;",
     null: "margin-left: 8px; color: #888; font-style: italic;",
     heading: "margin: 16px 0 8px 0;",
-    list: "margin: 0; padding-left: 20px; line-height: 1.5;",
-    "top-list":
-      "margin: 0; padding-left: 20px; list-style-type: '→'; list-style-position: outside; padding-left: 28px;",
-    circular: "margin-left: 8px; color: #DC2626;",
+    list: "margin: 0; padding: 0; line-height: 1.5; list-style: none;", // Fully reset list styles
+    "top-list": "margin: 0; padding: 0; list-style: none;", // Avoid newline for top list markers
+    "top-list-item": "display: inline-flex; align-items: center;", // Prevent newline and align
+    "top-list-marker": "margin-right: 8px; color: #000;", // Style marker manually
+    circular: "margin-left: 8px; color: #FF0000;",
   };
 
   const styles =
@@ -46,15 +44,19 @@ const jsonToHtml = (json, options = {}) => {
       ? defaultStyles
       : { ...defaultStyles, ...useStyles };
 
+  // Function to apply inline or class-based styles dynamically
   const applyStyle = (key) => {
     if (!styles[key]) return "";
+
     if (styleLocation === "inline") {
+      // Handle special cases for characters needing Unicode escape sequences
       if (key === "top-list") {
-        return ` style="${styles[key].replace("'→'", "'\\2192'")}"`;
+        return ` style="${styles[key].replace("'↘'", "'\\2198'")}"`; // Unicode for ↘
       }
-      return ` style="${styles[key]}"`;
+      return ` style="${styles[key]}"`; // General inline styles
     }
-    return ` class="json-${key}"`;
+
+    return ` class="json-${key}"`; // Class-based styles
   };
 
   const generateStyleTag = () => {
@@ -64,7 +66,8 @@ const jsonToHtml = (json, options = {}) => {
       .map(([key, value]) => {
         if (key === "top-list") {
           return `.json-${key} { ${value} }
-.json-${key} > li { padding-left: 8px; }`;
+.json-${key} > li { color: inherit; }
+.json-${key} > li::marker { color: #9CA3AF; }`;
         }
         return `.json-${key} { ${value} }`;
       })
@@ -75,7 +78,7 @@ const jsonToHtml = (json, options = {}) => {
 
   const visited = new WeakSet();
 
-  const getIndent = (level) => " ".repeat(level * indent);
+  const getIndent = (level) => " ".repeat(level * 2);
 
   const escapeHtml = (str) => {
     return String(str)
@@ -331,7 +334,36 @@ ${convertValue(value, newPath, 1)}
       return `${indent}<ul${applyStyle(listStyle)}>${items}${indent}</ul>`;
     }
 
-    // Rest of the existing convertObject function...
+    // Add the regular object rendering logic here
+    return keys
+      .map((key) => {
+        const value = obj[key];
+        const newPath = path ? `${path}.${key}` : key;
+        const headerLevel = shouldBeHeader(newPath);
+
+        if (headerLevel) {
+          // Show full value for primitives only, no preview for objects/arrays
+          const headerContent =
+            typeof value === "object" && value !== null
+              ? "" // No preview text for objects/arrays
+              : convertValue(value, newPath, level + 1);
+
+          return `${indent}<h${headerLevel}${applyStyle(
+            "heading"
+          )}>${escapeHtml(formatKey(key))}${
+            headerContent ? `: ${headerContent}` : ""
+          }</h${headerLevel}>${
+            typeof value === "object" && value !== null
+              ? `\n${convertValue(value, newPath, level + 1)}`
+              : ""
+          }`;
+        }
+
+        return `${indent}<div><span${applyStyle("key")}>${escapeHtml(
+          formatKey(key)
+        )}:</span> ${convertValue(value, newPath, level + 1)}</div>`;
+      })
+      .join("\n");
   };
 
   // Add post-processing function
@@ -354,38 +386,13 @@ ${convertValue(value, newPath, 1)}
     return processed;
   };
 
-  const formatOutput = (html) => {
-    switch (outputFormat) {
-      case "minified":
-        return html
-          .replace(/>\s+</g, "><") // Remove whitespace between tags
-          .replace(/\s{2,}/g, " ") // Replace multiple spaces with single space
-          .replace(/[\n\r]/g, "") // Remove all newlines
-          .trim();
-      case "pretty":
-        // Simple pretty print - you could use a more sophisticated library if needed
-        let indentLevel = 0;
-        const lines = html
-          .replace(/></g, ">\n<") // Add newline between tags
-          .split("\n")
-          .map((line) => {
-            line = line.trim();
-            if (line.match(/<\/[^>]+>$/)) indentLevel--; // Closing tag
-            const indentation = "  ".repeat(Math.max(0, indentLevel));
-            if (line.match(/^<[^/][^>]*>$/)) indentLevel++; // Opening tag
-            return indentation + line;
-          });
-        return lines.join("\n");
-      default:
-        return html; // No formatting
-    }
-  };
-
-  return formatOutput(
-    postProcessHtml(`${generateStyleTag()}<div${applyStyle("container")}>
+  return postProcessHtml(`${generateStyleTag()}<div${applyStyle("container")}>
 ${convertValue(json, initialPath)}
 </div>`)
-  );
+    .replace(/>\s+</g, "><")
+    .replace(/\s{2,}/g, " ")
+    .replace(/[\n\r]/g, "")
+    .trim();
 };
 
 export { jsonToHtml };
