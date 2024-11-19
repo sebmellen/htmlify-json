@@ -9,6 +9,7 @@
  * @param {boolean|string[]} [options.listObjects=false] - Keys that should be rendered as lists
  * @param {boolean} [options.formatKeys=false] - Whether to format keys from camelCase/snake_case to normal text
  * @param {"inline"|"top"} [options.styleLocation="inline"] - Where to place styles: inline or in a top-level style tag
+ * @param {"pretty"|"minified"|"none"} [options.outputFormat="none"] - Format of the final HTML output
  * @returns {string} The generated HTML string
  */
 const jsonToHtml = (json, options = {}) => {
@@ -20,6 +21,7 @@ const jsonToHtml = (json, options = {}) => {
     listObjects = false,
     formatKeys = false,
     styleLocation = "inline",
+    outputFormat = "minified",
   } = options;
 
   const defaultStyles = {
@@ -31,7 +33,7 @@ const jsonToHtml = (json, options = {}) => {
     boolean: "margin-left: 8px; color: #9333EA;",
     null: "margin-left: 8px; color: #888; font-style: italic;",
     heading: "margin: 16px 0 8px 0;",
-    list: "margin: 0; padding-left: 20px;",
+    list: "margin: 0; padding-left: 20px; line-height: 1.5;",
     "top-list":
       "margin: 0; padding-left: 20px; list-style-type: '→'; list-style-position: outside; padding-left: 28px;",
     circular: "margin-left: 8px; color: #DC2626;",
@@ -199,6 +201,11 @@ const jsonToHtml = (json, options = {}) => {
       return acc;
     }, []);
 
+    // Check if this array contains nested objects that will become lists
+    const hasNestedLists = arr.some(
+      (item) => typeof item === "object" && item !== null
+    );
+
     // Render all segments
     return segments
       .map((segment) => {
@@ -231,7 +238,9 @@ ${segment.remainingEntries
         } else {
           // Render list segments
           if (segment.items.length === 0) return "";
-          return `${indent}<ul${applyStyle("list")}>
+          // Use top-list style for outer lists under headers that contain nested lists
+          const listStyle = listObjects && hasNestedLists ? "top-list" : "list";
+          return `${indent}<ul${applyStyle(listStyle)}>
 ${segment.items
   .map(
     ({ item, index }) =>
@@ -300,8 +309,9 @@ ${convertValue(value, "", 1)}
         })
         .join("\n");
 
-      // Always use regular list style, we'll transform the outer list in post-processing
-      return `${indent}<ul${applyStyle("list")}>${items}${indent}</ul>`;
+      // Use top-list style for top-level lists when listObjects is true
+      const listStyle = level === 0 ? "top-list" : "list";
+      return `${indent}<ul${applyStyle(listStyle)}>${items}${indent}</ul>`;
     }
 
     // Regular object rendering
@@ -361,9 +371,38 @@ ${convertValue(value, "", 1)}`;
     return processed;
   };
 
-  return postProcessHtml(`${generateStyleTag()}<div${applyStyle("container")}>
+  const formatOutput = (html) => {
+    switch (outputFormat) {
+      case "minified":
+        return html
+          .replace(/>\s+</g, "><") // Remove whitespace between tags
+          .replace(/\s{2,}/g, " ") // Replace multiple spaces with single space
+          .replace(/[\n\r]/g, "") // Remove all newlines
+          .trim();
+      case "pretty":
+        // Simple pretty print - you could use a more sophisticated library if needed
+        let indentLevel = 0;
+        const lines = html
+          .replace(/></g, ">\n<") // Add newline between tags
+          .split("\n")
+          .map((line) => {
+            line = line.trim();
+            if (line.match(/<\/[^>]+>$/)) indentLevel--; // Closing tag
+            const indentation = "  ".repeat(Math.max(0, indentLevel));
+            if (line.match(/^<[^/][^>]*>$/)) indentLevel++; // Opening tag
+            return indentation + line;
+          });
+        return lines.join("\n");
+      default:
+        return html; // No formatting
+    }
+  };
+
+  return formatOutput(
+    postProcessHtml(`${generateStyleTag()}<div${applyStyle("container")}>
 ${convertValue(json, initialPath)}
-</div>`);
+</div>`)
+  );
 };
 
 export { jsonToHtml };
